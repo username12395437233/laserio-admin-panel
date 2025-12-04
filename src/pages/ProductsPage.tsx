@@ -23,6 +23,7 @@ import {
 } from '@mui/material'
 import { Add, Edit, Refresh } from '@mui/icons-material'
 import api from '../api/client'
+import { slugify } from '../utils/slugify'
 
 interface CategoryOption {
   id: number
@@ -109,6 +110,7 @@ export default function ProductsPage(props: ProductsPageProps) {
   const [saveError, setSaveError] = useState<string | null>(null)
   const [jsonSnippet, setJsonSnippet] = useState('')
   const [jsonSnippetError, setJsonSnippetError] = useState<string | null>(null)
+  const [slugDirty, setSlugDirty] = useState(false)
 
   const selectedCategory = useMemo(
     () => categories.find((c) => c.slug === selectedCategorySlug) ?? null,
@@ -120,6 +122,17 @@ export default function ProductsPage(props: ProductsPageProps) {
       setSelectedCategorySlug(externalCategorySlug)
     }
   }, [externalCategorySlug])
+
+  // авто‑генерация slug из name, пока пользователь сам не менял slug
+  useEffect(() => {
+    if (!slugDirty) {
+      setForm((prev) => {
+        const auto = slugify(prev.name || '')
+        if (!auto || prev.slug === auto) return prev
+        return { ...prev, slug: auto }
+      })
+    }
+  }, [form.name, slugDirty])
 
   const loadCategories = async () => {
     setCategoriesLoading(true)
@@ -184,6 +197,7 @@ export default function ProductsPage(props: ProductsPageProps) {
     })
     setJsonSnippet('')
     setJsonSnippetError(null)
+    setSlugDirty(false)
     setSaveError(null)
     setDialogOpen(true)
   }
@@ -215,6 +229,7 @@ export default function ProductsPage(props: ProductsPageProps) {
       )
       setJsonSnippet(snippet)
       setJsonSnippetError(null)
+      setSlugDirty(true)
       setDialogOpen(true)
     } catch (err: any) {
       const message =
@@ -229,6 +244,9 @@ export default function ProductsPage(props: ProductsPageProps) {
     (field: keyof ProductFormState) => (event: React.ChangeEvent<HTMLInputElement>) => {
       const value = field === 'category_id' ? Number(event.target.value) || '' : event.target.value
       setForm((prev) => ({ ...prev, [field]: value }))
+      if (field === 'slug') {
+        setSlugDirty(true)
+      }
     }
 
   const payload: ProductPayload = useMemo(
@@ -267,6 +285,9 @@ export default function ProductsPage(props: ProductsPageProps) {
         category_id:
           typeof parsed.category_id === 'number' ? parsed.category_id : prev.category_id,
       }))
+      if (typeof parsed.slug === 'string' && parsed.slug) {
+        setSlugDirty(true)
+      }
     } catch (err) {
       setJsonSnippetError('Не удалось разобрать JSON. Проверь формат.')
     }

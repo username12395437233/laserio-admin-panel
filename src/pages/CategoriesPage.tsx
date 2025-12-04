@@ -20,6 +20,7 @@ import {
   Typography,
 } from '@mui/material'
 import { Add, Edit, ExpandLess, ExpandMore, FilterList, Refresh } from '@mui/icons-material'
+import { slugify } from '../utils/slugify'
 import api from '../api/client'
 
 interface CategoryNode {
@@ -216,6 +217,7 @@ const CategoriesPage = forwardRef<CategoriesPageHandle, CategoriesPageProps>(fun
   const [saveError, setSaveError] = useState<string | null>(null)
   const [jsonSnippet, setJsonSnippet] = useState('')
   const [jsonSnippetError, setJsonSnippetError] = useState<string | null>(null)
+  const [slugDirty, setSlugDirty] = useState(false)
 
   const loadTree = async () => {
     setLoading(true)
@@ -255,6 +257,17 @@ const CategoriesPage = forwardRef<CategoriesPageHandle, CategoriesPageProps>(fun
     })
   }
 
+  // авто‑генерация slug из name, пока пользователь сам не менял slug
+  useEffect(() => {
+    if (!slugDirty) {
+      setForm((prev) => {
+        const auto = slugify(prev.name || '')
+        if (!auto || prev.slug === auto) return prev
+        return { ...prev, slug: auto }
+      })
+    }
+  }, [form.name, slugDirty])
+
   const openCreateDialog = (parentId: number | null) => {
     setDialogMode('create')
     setCurrentNode(null)
@@ -262,6 +275,7 @@ const CategoriesPage = forwardRef<CategoriesPageHandle, CategoriesPageProps>(fun
     setForm(buildInitialFormState())
     setJsonSnippet('')
     setJsonSnippetError(null)
+    setSlugDirty(false)
     setSaveError(null)
     setDialogOpen(true)
   }
@@ -286,6 +300,7 @@ const CategoriesPage = forwardRef<CategoriesPageHandle, CategoriesPageProps>(fun
     )
     setJsonSnippet(snippet)
     setJsonSnippetError(null)
+    setSlugDirty(true)
     setSaveError(null)
     setDialogOpen(true)
   }
@@ -303,6 +318,9 @@ const CategoriesPage = forwardRef<CategoriesPageHandle, CategoriesPageProps>(fun
         ...prev,
         [field]: value,
       }))
+      if (field === 'slug') {
+        setSlugDirty(true)
+      }
     }
 
   const payload: CategoryPayload = useMemo(
