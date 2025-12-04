@@ -80,10 +80,11 @@ interface ProductPayload {
 
 interface ProductsPageProps {
   externalCategorySlug?: string
+  onProductsChanged?: () => void
 }
 
 export default function ProductsPage(props: ProductsPageProps) {
-  const { externalCategorySlug } = props
+  const { externalCategorySlug, onProductsChanged } = props
   const [categories, setCategories] = useState<CategoryOption[]>([])
   const [categoriesLoading, setCategoriesLoading] = useState(false)
   const [categoriesError, setCategoriesError] = useState<string | null>(null)
@@ -106,6 +107,8 @@ export default function ProductsPage(props: ProductsPageProps) {
   })
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [jsonSnippet, setJsonSnippet] = useState('')
+  const [jsonSnippetError, setJsonSnippetError] = useState<string | null>(null)
 
   const selectedCategory = useMemo(
     () => categories.find((c) => c.slug === selectedCategorySlug) ?? null,
@@ -179,6 +182,8 @@ export default function ProductsPage(props: ProductsPageProps) {
       specs_html: '',
       category_id: selectedCategory?.id ?? '',
     })
+    setJsonSnippet('')
+    setJsonSnippetError(null)
     setSaveError(null)
     setDialogOpen(true)
   }
@@ -197,6 +202,19 @@ export default function ProductsPage(props: ProductsPageProps) {
         specs_html: data.specs_html ?? '',
         category_id: data.category_id,
       })
+      const snippet = JSON.stringify(
+        {
+          name: data.name,
+          slug: data.slug,
+          category_id: data.category_id,
+          content_html: data.content_html ?? '',
+          specs_html: data.specs_html ?? '',
+        },
+        null,
+        2,
+      )
+      setJsonSnippet(snippet)
+      setJsonSnippetError(null)
       setDialogOpen(true)
     } catch (err: any) {
       const message =
@@ -225,6 +243,56 @@ export default function ProductsPage(props: ProductsPageProps) {
     [form],
   )
 
+  const applyJsonToProductForm = (raw: string) => {
+    try {
+      const parsed = JSON.parse(raw) as Partial<{
+        name: string
+        slug: string
+        category_id: number
+        content_html: string
+        specs_html: string
+      }>
+
+      setJsonSnippet(raw)
+      setJsonSnippetError(null)
+
+      setForm((prev) => ({
+        ...prev,
+        name: parsed.name ?? prev.name,
+        slug: parsed.slug ?? prev.slug,
+        content_html:
+          typeof parsed.content_html === 'string' ? parsed.content_html : prev.content_html,
+        specs_html:
+          typeof parsed.specs_html === 'string' ? parsed.specs_html : prev.specs_html,
+        category_id:
+          typeof parsed.category_id === 'number' ? parsed.category_id : prev.category_id,
+      }))
+    } catch (err) {
+      setJsonSnippetError('Не удалось разобрать JSON. Проверь формат.')
+    }
+  }
+
+  const handlePasteJsonFromClipboard = async () => {
+    try {
+      const text = await navigator.clipboard.readText()
+      if (!text) {
+        setJsonSnippetError('В буфере обмена нет текста.')
+        return
+      }
+      applyJsonToProductForm(text)
+    } catch (err) {
+      setJsonSnippetError('Нет доступа к буферу обмена.')
+    }
+  }
+
+  const handleApplyJsonFromInput = () => {
+    if (!jsonSnippet.trim()) {
+      setJsonSnippetError('Поле с JSON пустое.')
+      return
+    }
+    applyJsonToProductForm(jsonSnippet)
+  }
+
   const handleSave = async () => {
     if (!form.name || !form.slug || !form.category_id || typeof form.category_id !== 'number') {
       setSaveError('Название, slug и категория обязательны.')
@@ -245,6 +313,10 @@ export default function ProductsPage(props: ProductsPageProps) {
 
       if (selectedCategorySlug) {
         await loadProducts(selectedCategorySlug)
+      }
+
+      if (onProductsChanged) {
+        onProductsChanged()
       }
     } catch (err: any) {
       const message =
@@ -385,6 +457,35 @@ export default function ProductsPage(props: ProductsPageProps) {
         <DialogTitle>{dialogTitle}</DialogTitle>
         <DialogContent dividers>
           <Stack spacing={2} sx={{ mt: 1 }}>
+            <Stack spacing={1}>
+              <Stack direction="row" justifyContent="space-between" alignItems="center">
+                <Typography variant="body2" color="text.secondary">
+                  Вставь в меня JSON, чтобы заполнить описание и характеристики товара.
+                </Typography>
+                <Button size="small" onClick={handlePasteJsonFromClipboard}>
+                  Вставить из буфера
+                </Button>
+              </Stack>
+              <TextField
+                placeholder="Вставь в меня"
+                value={jsonSnippet}
+                onChange={(e) => setJsonSnippet(e.target.value)}
+                multiline
+                minRows={3}
+                fullWidth
+              />
+              <Box>
+                <Button size="small" onClick={handleApplyJsonFromInput}>
+                  Применить JSON
+                </Button>
+              </Box>
+              {jsonSnippetError && (
+                <Alert severity="error">
+                  {jsonSnippetError}
+                </Alert>
+              )}
+            </Stack>
+
             <FormControl fullWidth size="small">
               <InputLabel id="product-category-select-label">Категория</InputLabel>
               <Select

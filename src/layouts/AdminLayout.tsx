@@ -26,7 +26,7 @@ export default function AdminLayout() {
           </Button>
         </Toolbar>
       </AppBar>
-      <Container sx={{ flex: 1, py: 3 }}>
+      <Container maxWidth={false} sx={{ flex: 1, py: 3 }}>
         <Outlet />
       </Container>
     </Box>

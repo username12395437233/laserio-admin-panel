@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react'
 import {
   Alert,
   Box,
@@ -19,7 +19,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material'
-import { Add, Edit, ExpandLess, ExpandMore } from '@mui/icons-material'
+import { Add, Edit, ExpandLess, ExpandMore, FilterList, Refresh } from '@mui/icons-material'
 import api from '../api/client'
 
 interface CategoryNode {
@@ -90,7 +90,21 @@ function CategoryTree({
                   <IconButton
                     edge="end"
                     size="small"
-                    onClick={() => onCreate(node.id)}
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      onSelect && onSelect(node)
+                    }}
+                    aria-label="Показать товары категории"
+                  >
+                    <FilterList fontSize="small" />
+                  </IconButton>
+                  <IconButton
+                    edge="end"
+                    size="small"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      onCreate(node.id)
+                    }}
                     aria-label="Добавить подкатегорию"
                   >
                     <Add fontSize="small" />
@@ -98,7 +112,10 @@ function CategoryTree({
                   <IconButton
                     edge="end"
                     size="small"
-                    onClick={() => onEdit(node, parentId)}
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      onEdit(node, parentId)
+                    }}
                     aria-label="Редактировать категорию"
                   >
                     <Edit fontSize="small" />
@@ -110,7 +127,10 @@ function CategoryTree({
                 {hasChildren ? (
                   <IconButton
                     size="small"
-                    onClick={() => onToggle(node.id)}
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      onToggle(node.id)
+                    }}
                     aria-label={isExpanded ? 'Свернуть' : 'Развернуть'}
                   >
                     {isExpanded ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
@@ -135,6 +155,7 @@ function CategoryTree({
                   onToggle={onToggle}
                   onCreate={onCreate}
                   onEdit={onEdit}
+                  onSelect={onSelect}
                 />
               </Collapse>
             )}
@@ -167,11 +188,18 @@ function buildInitialFormState(node?: CategoryNode): CategoryFormState {
   }
 }
 
+export interface CategoriesPageHandle {
+  reload: () => void
+}
+
 interface CategoriesPageProps {
   onCategorySelect?: (slug: string) => void
 }
 
-export default function CategoriesPage(props: CategoriesPageProps) {
+const CategoriesPage = forwardRef<CategoriesPageHandle, CategoriesPageProps>(function CategoriesPage(
+  props,
+  ref,
+) {
   const { onCategorySelect } = props
   const [data, setData] = useState<CategoryNode[]>([])
   const [loading, setLoading] = useState(false)
@@ -186,6 +214,8 @@ export default function CategoriesPage(props: CategoriesPageProps) {
   const [form, setForm] = useState<CategoryFormState>(() => buildInitialFormState())
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
+  const [jsonSnippet, setJsonSnippet] = useState('')
+  const [jsonSnippetError, setJsonSnippetError] = useState<string | null>(null)
 
   const loadTree = async () => {
     setLoading(true)
@@ -205,6 +235,14 @@ export default function CategoriesPage(props: CategoriesPageProps) {
     loadTree()
   }, [])
 
+  useImperativeHandle(
+    ref,
+    () => ({
+      reload: loadTree,
+    }),
+    [],
+  )
+
   const handleToggle = (id: number) => {
     setExpanded((prev) => {
       const next = new Set(prev)
@@ -222,6 +260,8 @@ export default function CategoriesPage(props: CategoriesPageProps) {
     setCurrentNode(null)
     setCurrentParentId(parentId)
     setForm(buildInitialFormState())
+    setJsonSnippet('')
+    setJsonSnippetError(null)
     setSaveError(null)
     setDialogOpen(true)
   }
@@ -231,6 +271,21 @@ export default function CategoriesPage(props: CategoriesPageProps) {
     setCurrentNode(node)
     setCurrentParentId(parentId)
     setForm(buildInitialFormState(node))
+     const snippet = JSON.stringify(
+      {
+        name: node.name,
+        slug: node.slug,
+        parent_id: parentId,
+        is_active: true,
+        featured_only: false,
+        sort_order: node.sort_order,
+        description: node.description ?? '',
+      },
+      null,
+      2,
+    )
+    setJsonSnippet(snippet)
+    setJsonSnippetError(null)
     setSaveError(null)
     setDialogOpen(true)
   }
@@ -263,6 +318,68 @@ export default function CategoriesPage(props: CategoriesPageProps) {
     [form, currentParentId],
   )
 
+  const applyJsonToForm = (raw: string) => {
+    try {
+      const parsed = JSON.parse(raw) as Partial<{
+        name: string
+        slug: string
+        parent_id: number | null
+        is_active: boolean
+        featured_only: boolean
+        sort_order: number
+        description: string | null
+      }>
+
+      setJsonSnippet(raw)
+      setJsonSnippetError(null)
+
+      if (Object.prototype.hasOwnProperty.call(parsed, 'parent_id')) {
+        setCurrentParentId(parsed.parent_id ?? null)
+      }
+
+      setForm((prev) => ({
+        ...prev,
+        name: parsed.name ?? prev.name,
+        slug: parsed.slug ?? prev.slug,
+        description:
+          typeof parsed.description === 'string' ? parsed.description : prev.description,
+        sort_order:
+          typeof parsed.sort_order === 'number' && !Number.isNaN(parsed.sort_order)
+            ? parsed.sort_order
+            : prev.sort_order,
+        is_active:
+          typeof parsed.is_active === 'boolean' ? parsed.is_active : prev.is_active,
+        featured_only:
+          typeof parsed.featured_only === 'boolean'
+            ? parsed.featured_only
+            : prev.featured_only,
+      }))
+    } catch (err) {
+      setJsonSnippetError('Не удалось разобрать JSON. Проверь формат.')
+    }
+  }
+
+  const handlePasteJsonFromClipboard = async () => {
+    try {
+      const text = await navigator.clipboard.readText()
+      if (!text) {
+        setJsonSnippetError('В буфере обмена нет текста.')
+        return
+      }
+      applyJsonToForm(text)
+    } catch (err) {
+      setJsonSnippetError('Нет доступа к буферу обмена.')
+    }
+  }
+
+  const handleApplyJsonFromInput = () => {
+    if (!jsonSnippet.trim()) {
+      setJsonSnippetError('Поле с JSON пустое.')
+      return
+    }
+    applyJsonToForm(jsonSnippet)
+  }
+
   const handleSave = async () => {
     if (!form.name || !form.slug) {
       setSaveError('Имя и slug обязательны.')
@@ -277,6 +394,10 @@ export default function CategoriesPage(props: CategoriesPageProps) {
         await api.post('/admin/categories', payload)
       } else if (dialogMode === 'edit' && currentNode) {
         await api.put(`/admin/categories/${currentNode.id}`, payload)
+      }
+
+      if (onCategorySelect && form.slug) {
+        onCategorySelect(form.slug)
       }
 
       setDialogOpen(false)
@@ -316,13 +437,23 @@ export default function CategoriesPage(props: CategoriesPageProps) {
             Здесь можно просматривать дерево категорий и создавать/редактировать записи.
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={() => openCreateDialog(null)}
-        >
-          Добавить категорию
-        </Button>
+        <Stack direction="row" spacing={1}>
+          <Button
+            variant="outlined"
+            startIcon={<Refresh />}
+            onClick={loadTree}
+            disabled={loading}
+          >
+            Обновить
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => openCreateDialog(null)}
+          >
+            Добавить категорию
+          </Button>
+        </Stack>
       </Stack>
 
       {loading && (
@@ -358,6 +489,35 @@ export default function CategoriesPage(props: CategoriesPageProps) {
         <DialogTitle>{dialogTitle}</DialogTitle>
         <DialogContent dividers>
           <Stack spacing={2} sx={{ mt: 1 }}>
+            <Stack spacing={1}>
+              <Stack direction="row" justifyContent="space-between" alignItems="center">
+                <Typography variant="body2" color="text.secondary">
+                  Вставь в меня JSON, чтобы заполнить поля категории.
+                </Typography>
+                <Button size="small" onClick={handlePasteJsonFromClipboard}>
+                  Вставить из буфера
+                </Button>
+              </Stack>
+              <TextField
+                placeholder="Вставь в меня"
+                value={jsonSnippet}
+                onChange={(e) => setJsonSnippet(e.target.value)}
+                multiline
+                minRows={3}
+                fullWidth
+              />
+              <Box>
+                <Button size="small" onClick={handleApplyJsonFromInput}>
+                  Применить JSON
+                </Button>
+              </Box>
+              {jsonSnippetError && (
+                <Alert severity="error">
+                  {jsonSnippetError}
+                </Alert>
+              )}
+            </Stack>
+
             {currentParentId && (
               <Typography variant="body2" color="text.secondary">
                 Родительская категория ID: {currentParentId}
@@ -433,5 +593,7 @@ export default function CategoriesPage(props: CategoriesPageProps) {
       </Dialog>
     </Box>
   )
-}
+})
+
+export default CategoriesPage
 
