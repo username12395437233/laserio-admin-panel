@@ -1,0 +1,704 @@
+{
+	"info": {
+		"_postman_id": "eedebb76-2783-4846-8177-037b8b72674c",
+		"name": "laserio",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "21576382"
+	},
+	"item": [
+		{
+			"name": "Login",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{TOKEN_LASERIO}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"email\": \"admin@local\",\r\n  \"password\": \"admin123\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://tamasaya.ru/api/laserio/admin/auth/login",
+					"protocol": "https",
+					"host": [
+						"tamasaya",
+						"ru"
+					],
+					"path": [
+						"api",
+						"laserio",
+						"admin",
+						"auth",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "categories",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://tamasaya.ru/api/laserio/categories/",
+					"protocol": "https",
+					"host": [
+						"tamasaya",
+						"ru"
+					],
+					"path": [
+						"api",
+						"laserio",
+						"categories",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "categories Tree",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://tamasaya.ru/api/laserio/categories/tree",
+					"protocol": "https",
+					"host": [
+						"tamasaya",
+						"ru"
+					],
+					"path": [
+						"api",
+						"laserio",
+						"categories",
+						"tree"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "category",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{TOKEN_LASERIO}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"description\": \"<section class=\\\"space-y-6\\\">\\n  <h2 class=\\\"text-2xl font-bold\\\">Неохлаждаемые микроболометрические сенсоры</h2>\\n  <p class=\\\"text-gray-700 leading-relaxed\\\">Неохлаждаемые микроболометры широко востребованы благодаря сочетанию функциональности и доступной стоимости. Эти сенсоры работают в длинноволновом инфракрасном диапазоне 8–14&nbsp;мкм и отличаются компактностью, малым весом, энергоэффективностью и высокой надёжностью. Благодаря своим характеристикам они применяются в носимых тепловизорах и миниатюрных оптико-электронных системах, в том числе устанавливаемых на беспилотных аппаратах.</p>\\n\\n  <h3 class=\\\"text-xl font-semibold\\\">Области применения</h3>\\n  <p class=\\\"text-gray-700 leading-relaxed\\\">Неохлаждаемые тепловизионные модули применяются в различных наблюдательных и измерительных системах. В компактных камерах они обычно работают с атермальными объективами с фиксированным фокусом, обеспечивая дальность наблюдения до нескольких километров. Для увеличения зоны охвата используются моторизованные зум-объективы.</p>\\n  <p class=\\\"text-gray-700 leading-relaxed\\\">Помимо наблюдения, такие матрицы применяются в термографических системах, где требуется точное определение температуры объектов — от контроля температуры человека на входе до выявления тепловых утечек в инженерных сетях.</p>\\n\\n  <h3 class=\\\"text-xl font-semibold\\\">Ассортимент и характеристики</h3>\\n  <p class=\\\"text-gray-700 leading-relaxed\\\">В каталоге представлены микроболометрические матрицы двух основных типов — на оксиде ванадия (VOx) и на аморфном кремнии (α-Si). Сенсоры α-Si обеспечивают более высокую чувствительность, однако имеют ограниченный температурный диапазон и могут требовать подогрева при эксплуатации на открытом воздухе в условиях сильного холода.</p>\\n  <p class=\\\"text-gray-700 leading-relaxed\\\">Стандартные разрешения неохлаждаемых тепловизионных детекторов включают 640×480, 640×512 и 384×288 пикселей при размерах пикселя 17, 14 или 12&nbsp;мкм. Уже доступны и мегапиксельные решения, обеспечивающие более высокую детализацию.</p>\\n  <p class=\\\"text-gray-700 leading-relaxed\\\">Большинство неохлаждаемых сенсоров совместимы с различными ИК-объективами, что позволяет настроить систему под конкретные задачи по дальности, полю зрения и условиям эксплуатации.</p>\\n</section>\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://tamasaya.ru/api/laserio/admin/categories/26",
+					"protocol": "https",
+					"host": [
+						"tamasaya",
+						"ru"
+					],
+					"path": [
+						"api",
+						"laserio",
+						"admin",
+						"categories",
+						"26"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "category",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://tamasaya.ru/api/laserio/categories/displei-spetsialnogo-naznacheniya/products",
+					"protocol": "https",
+					"host": [
+						"tamasaya",
+						"ru"
+					],
+					"path": [
+						"api",
+						"laserio",
+						"categories",
+						"displei-spetsialnogo-naznacheniya",
+						"products"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "category",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{TOKEN_LASERIO}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{ \"name\": \"LC-MINS\", \"slug\": \"lc-mins\"\r\n   ,\r\n  \"is_active\": true,\r\n  \"parent_id\": 47,\r\n//   \"parent_id\": 35,\r\n  \"featured_only\": false,\r\n  \"sort_order\": 0\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://tamasaya.ru/api/laserio/admin/categories",
+					"protocol": "https",
+					"host": [
+						"tamasaya",
+						"ru"
+					],
+					"path": [
+						"api",
+						"laserio",
+						"admin",
+						"categories"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "product",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://tamasaya.ru/api/laserio/products/monitor-spetsialnogo-naznacheniya-jh170-md20-sl3",
+					"protocol": "https",
+					"host": [
+						"tamasaya",
+						"ru"
+					],
+					"path": [
+						"api",
+						"laserio",
+						"products",
+						"monitor-spetsialnogo-naznacheniya-jh170-md20-sl3"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "product",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{TOKEN_LASERIO}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"name\": \"Микродисплеи SXGA060\", \"slug\": \"mikrodisplei-sxga060\"\r\n    ,\r\n    \"price\": 0,\r\n    \"category_id\":7,\r\n    \"content_html\":\"<p>жесткое описание</p>\"\r\n    // \"specs_html\":\"<ul><li>Спека</li></ul>\"\r\n  }\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://tamasaya.ru/api/laserio/admin/products",
+					"protocol": "https",
+					"host": [
+						"tamasaya",
+						"ru"
+					],
+					"path": [
+						"api",
+						"laserio",
+						"admin",
+						"products"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "product",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{TOKEN_LASERIO}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"name\":\"MacBook Pro 14\", \r\n    \"slug\":\"mbp-143\", \r\n    \"price\":199000,\r\n    \"category_id\":2,\r\n    \"content_html\":\"<p>Описание</p>\",\r\n    \"specs_html\":\"<ul><li>Спека</li></ul>\"\r\n  }\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://tamasaya.ru/api/laserio/admin/products/1",
+					"protocol": "https",
+					"host": [
+						"tamasaya",
+						"ru"
+					],
+					"path": [
+						"api",
+						"laserio",
+						"admin",
+						"products",
+						"1"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "product doc",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{TOKEN_LASERIO}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/C:/Users/User/Desktop/тест.pdf"
+						}
+					]
+				},
+				"url": {
+					"raw": "https://tamasaya.ru/api/laserio/admin/products/1/doc",
+					"protocol": "https",
+					"host": [
+						"tamasaya",
+						"ru"
+					],
+					"path": [
+						"api",
+						"laserio",
+						"admin",
+						"products",
+						"1",
+						"doc"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "products",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://tamasaya.ru/api/laserio/products",
+					"protocol": "https",
+					"host": [
+						"tamasaya",
+						"ru"
+					],
+					"path": [
+						"api",
+						"laserio",
+						"products"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "product",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{TOKEN_LASERIO}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PATCH",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"content_html\": \"<section class=\\\"space-y-6\\\"><h2 class=\\\"text-2xl font-bold\\\">Описание микродисплеев серии SXGA060</h2><p class=\\\"text-gray-700 leading-relaxed\\\">Микродисплеи серии SXGA060 компании OLiGHTEK представляют собой компактные AMOLED-модули с низким энергопотреблением и диагональю 0,6 дюйма. Устройства обеспечивают высокую детализацию изображения благодаря разрешению формата SXGA — 1280×1024 пикселей.</p><p class=\\\"text-gray-700 leading-relaxed\\\">В линейку входят модели в полноцветном исполнении, а также моноварианты с белым или зелёным свечением. Основа дисплея выполнена на кремниевой подложке по технологии CMOS 0,18 мкм, что обеспечивает точную и стабильную цифровую обработку видеосигнала.</p><p class=\\\"text-gray-700 leading-relaxed\\\">Серия SXGA060 предназначена для систем, где важны компактность, энергоэффективность и высокая чёткость изображения — в частности, для окулярных и оптических устройств.</p><h3 class=\\\"text-xl font-semibold\\\">Ключевые особенности</h3><ul class=\\\"list-disc list-inside space-y-1 text-gray-700\\\"><li>Высокое разрешение SXGA (1280×1024).</li><li>AMOLED-технология с низким энергопотреблением.</li><li>Полноцветные и монохромные исполнения.</li><li>Кремниевая подложка CMOS 0,18 мкм для цифровой обработки видео.</li><li>Подходит для компактных визуальных систем.</li></ul></section>\",\r\n  \"specs_html\": \"<table class=\\\"min-w-full border border-gray-300 text-sm\\\"><tbody><tr><td class=\\\"p-2 font-medium\\\">Разрешение</td><td class=\\\"p-2\\\">1280 × 1024</td></tr><tr><td class=\\\"p-2 font-medium\\\">Диагональ</td><td class=\\\"p-2\\\">0,6 дюйма</td></tr><tr><td class=\\\"p-2 font-medium\\\">Цветность</td><td class=\\\"p-2\\\">Полноцветный / моно белый / моно зелёный</td></tr><tr><td class=\\\"p-2 font-medium\\\">Тип подложки</td><td class=\\\"p-2\\\">CMOS 0,18 мкм</td></tr></tbody></table>\"\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://tamasaya.ru/api/laserio/admin/products/9",
+					"protocol": "https",
+					"host": [
+						"tamasaya",
+						"ru"
+					],
+					"path": [
+						"api",
+						"laserio",
+						"admin",
+						"products",
+						"9"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "products photo",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{TOKEN_LASERIO}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://tamasaya.ru/api/laserio/admin/products/6/images",
+					"protocol": "https",
+					"host": [
+						"tamasaya",
+						"ru"
+					],
+					"path": [
+						"api",
+						"laserio",
+						"admin",
+						"products",
+						"6",
+						"images"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "product photo",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{TOKEN_LASERIO}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/C:/Users/User/Desktop/jh170-md20-sl3_razmeri.jpg"
+						}
+					]
+				},
+				"url": {
+					"raw": "https://tamasaya.ru/api/laserio/admin/products/1/images",
+					"protocol": "https",
+					"host": [
+						"tamasaya",
+						"ru"
+					],
+					"path": [
+						"api",
+						"laserio",
+						"admin",
+						"products",
+						"1",
+						"images"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "product photo",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{TOKEN_LASERIO}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/C:/Users/User/Desktop/jh170-md20-sl3_razmeri.jpg"
+						}
+					]
+				},
+				"url": {
+					"raw": "https://tamasaya.ru/api/laserio/admin/products/6/images/img_mibl2tv8i5jgi2",
+					"protocol": "https",
+					"host": [
+						"tamasaya",
+						"ru"
+					],
+					"path": [
+						"api",
+						"laserio",
+						"admin",
+						"products",
+						"6",
+						"images",
+						"img_mibl2tv8i5jgi2"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "orders",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{TOKEN_LASERIO}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://tamasaya.ru/api/laserio/admin/orders",
+					"protocol": "https",
+					"host": [
+						"tamasaya",
+						"ru"
+					],
+					"path": [
+						"api",
+						"laserio",
+						"admin",
+						"orders"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "media-library",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{TOKEN_LASERIO}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://tamasaya.ru/api/laserio/admin/media-library",
+					"protocol": "https",
+					"host": [
+						"tamasaya",
+						"ru"
+					],
+					"path": [
+						"api",
+						"laserio",
+						"admin",
+						"media-library"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "media-library",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{TOKEN_LASERIO}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/C:/Users/User/Pictures/icons/kills.png"
+						},
+						{
+							"key": "name",
+							"value": "фото для теста",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "https://tamasaya.ru/api/laserio/admin/media-library",
+					"protocol": "https",
+					"host": [
+						"tamasaya",
+						"ru"
+					],
+					"path": [
+						"api",
+						"laserio",
+						"admin",
+						"media-library"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "media-library",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{TOKEN_LASERIO}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"name\":\"MacBook Pro 14\", \r\n    \"slug\":\"mbp-143\", \r\n    \"price\":199000,\r\n    \"category_id\":2,\r\n    \"content_html\":\"<p>Описание</p>\",\r\n    \"specs_html\":\"<ul><li>Спека</li></ul>\"\r\n  }\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://tamasaya.ru/api/laserio/admin/media-library",
+					"protocol": "https",
+					"host": [
+						"tamasaya",
+						"ru"
+					],
+					"path": [
+						"api",
+						"laserio",
+						"admin",
+						"media-library"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
