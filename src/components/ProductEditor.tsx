@@ -199,7 +199,7 @@ function EditorToolbar({
 interface RichEditorProps {
   placeholder?: string
   onHtmlChange?: (html: string) => void
-  editorRef?: React.RefObject<HTMLDivElement>
+  editorRef?: React.RefObject<HTMLDivElement | null>
 }
 
 function RichEditor({ placeholder, onHtmlChange, editorRef }: RichEditorProps) {
@@ -429,30 +429,6 @@ function TableEditor({ model, onChange }: TableEditorProps) {
 
 // ====== Serialization helpers ======
 
-const ALLOWED_TAGS = new Set([
-  'SECTION',
-  'H1',
-  'H2',
-  'H3',
-  'H4',
-  'P',
-  'UL',
-  'OL',
-  'LI',
-  'TABLE',
-  'TBODY',
-  'TR',
-  'TD',
-  'A',
-  'BLOCKQUOTE',
-  'CODE',
-  'PRE',
-  'STRONG',
-  'EM',
-  'U',
-  'BR',
-])
-
 function createEl<K extends keyof HTMLElementTagNameMap>(
   tag: K,
   className?: string,
@@ -662,8 +638,8 @@ export const ProductEditor = forwardRef(
   const contentRef = useRef<HTMLDivElement | null>(null)
   const categoriesRef = useRef<HTMLDivElement | null>(null)
 
-  const [contentHtml, setContentHtml] = useState(initialContentHtml || '')
-  const [categoriesHtml, setCategoriesHtml] = useState(initialCategoriesHtml || '')
+  const [, setContentHtml] = useState(initialContentHtml || '')
+  const [, setCategoriesHtml] = useState(initialCategoriesHtml || '')
   const [specsModel, setSpecsModel] = useState<SpecsModel>(() => ({
     columns: 2,
     rows: [
