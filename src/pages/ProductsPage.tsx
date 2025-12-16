@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import {
   Alert,
   Box,
@@ -24,6 +24,7 @@ import {
 import { Add, Edit, Refresh } from '@mui/icons-material'
 import api from '../api/client'
 import { slugify } from '../utils/slugify'
+import { ProductEditor, type ProductEditorHandle } from '../components/ProductEditor'
 
 interface CategoryOption {
   id: number
@@ -111,6 +112,8 @@ export default function ProductsPage(props: ProductsPageProps) {
   const [jsonSnippet, setJsonSnippet] = useState('')
   const [jsonSnippetError, setJsonSnippetError] = useState<string | null>(null)
   const [slugDirty, setSlugDirty] = useState(false)
+  const [editorKey, setEditorKey] = useState(0)
+  const productEditorRef = useRef<ProductEditorHandle | null>(null)
 
   const selectedCategory = useMemo(
     () => categories.find((c) => c.slug === selectedCategorySlug) ?? null,
@@ -198,6 +201,7 @@ export default function ProductsPage(props: ProductsPageProps) {
     setJsonSnippet('')
     setJsonSnippetError(null)
     setSlugDirty(false)
+    setEditorKey((k) => k + 1)
     setSaveError(null)
     setDialogOpen(true)
   }
@@ -230,6 +234,7 @@ export default function ProductsPage(props: ProductsPageProps) {
       setJsonSnippet(snippet)
       setJsonSnippetError(null)
       setSlugDirty(true)
+      setEditorKey((k) => k + 1)
       setDialogOpen(true)
     } catch (err: any) {
       const message =
@@ -248,18 +253,6 @@ export default function ProductsPage(props: ProductsPageProps) {
         setSlugDirty(true)
       }
     }
-
-  const payload: ProductPayload = useMemo(
-    () => ({
-      name: form.name || undefined,
-      slug: form.slug || undefined,
-      price: 0,
-      category_id: typeof form.category_id === 'number' ? form.category_id : undefined,
-      content_html: form.content_html || undefined,
-      specs_html: form.specs_html || undefined,
-    }),
-    [form],
-  )
 
   const applyJsonToProductForm = (raw: string) => {
     try {
@@ -324,6 +317,24 @@ export default function ProductsPage(props: ProductsPageProps) {
     setSaveError(null)
 
     try {
+      let contentHtml = form.content_html
+      let specsHtml = form.specs_html
+
+      if (productEditorRef.current) {
+        const value = productEditorRef.current.getValue()
+        contentHtml = value.content_html
+        specsHtml = value.specs_html
+      }
+
+      const payload: ProductPayload = {
+        name: form.name || undefined,
+        slug: form.slug || undefined,
+        price: 0,
+        category_id: typeof form.category_id === 'number' ? form.category_id : undefined,
+        content_html: contentHtml || undefined,
+        specs_html: specsHtml || undefined,
+      }
+
       if (dialogMode === 'create') {
         await api.post('/admin/products', payload)
       } else if (dialogMode === 'edit' && currentProduct) {
@@ -493,6 +504,7 @@ export default function ProductsPage(props: ProductsPageProps) {
                 onChange={(e) => setJsonSnippet(e.target.value)}
                 multiline
                 minRows={3}
+                maxRows={3}
                 fullWidth
               />
               <Box>
@@ -541,22 +553,19 @@ export default function ProductsPage(props: ProductsPageProps) {
               fullWidth
               required
             />
-            <TextField
-              label="Описание (content_html)"
-              value={form.content_html}
-              onChange={handleFormChange('content_html')}
-              fullWidth
-              multiline
-              minRows={4}
-            />
-            <TextField
-              label="Характеристики (specs_html)"
-              value={form.specs_html}
-              onChange={handleFormChange('specs_html')}
-              fullWidth
-              multiline
-              minRows={4}
-            />
+
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>
+                Описание и характеристики (визуальный редактор)
+              </Typography>
+              <ProductEditor
+                key={editorKey}
+                ref={productEditorRef}
+                mode="product"
+                initialContentHtml={form.content_html}
+                initialSpecsHtml={form.specs_html}
+              />
+            </Box>
 
             {saveError && (
               <Alert severity="error">

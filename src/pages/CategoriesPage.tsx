@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react'
+import { forwardRef, useEffect, useImperativeHandle, useState, useRef } from 'react'
 import {
   Alert,
   Box,
@@ -21,6 +21,7 @@ import {
 } from '@mui/material'
 import { Add, Edit, ExpandLess, ExpandMore, FilterList, Refresh } from '@mui/icons-material'
 import { slugify } from '../utils/slugify'
+import { ProductEditor, type ProductEditorHandle } from '../components/ProductEditor'
 import api from '../api/client'
 
 interface CategoryNode {
@@ -218,6 +219,8 @@ const CategoriesPage = forwardRef<CategoriesPageHandle, CategoriesPageProps>(fun
   const [jsonSnippet, setJsonSnippet] = useState('')
   const [jsonSnippetError, setJsonSnippetError] = useState<string | null>(null)
   const [slugDirty, setSlugDirty] = useState(false)
+  const [editorKey, setEditorKey] = useState(0)
+  const descriptionEditorRef = useRef<ProductEditorHandle | null>(null)
 
   const loadTree = async () => {
     setLoading(true)
@@ -276,6 +279,8 @@ const CategoriesPage = forwardRef<CategoriesPageHandle, CategoriesPageProps>(fun
     setJsonSnippet('')
     setJsonSnippetError(null)
     setSlugDirty(false)
+    setEditorKey((k) => k + 1)
+    setSlugDirty(false)
     setSaveError(null)
     setDialogOpen(true)
   }
@@ -285,7 +290,7 @@ const CategoriesPage = forwardRef<CategoriesPageHandle, CategoriesPageProps>(fun
     setCurrentNode(node)
     setCurrentParentId(parentId)
     setForm(buildInitialFormState(node))
-     const snippet = JSON.stringify(
+    const snippet = JSON.stringify(
       {
         name: node.name,
         slug: node.slug,
@@ -301,6 +306,7 @@ const CategoriesPage = forwardRef<CategoriesPageHandle, CategoriesPageProps>(fun
     setJsonSnippet(snippet)
     setJsonSnippetError(null)
     setSlugDirty(true)
+    setEditorKey((k) => k + 1)
     setSaveError(null)
     setDialogOpen(true)
   }
@@ -322,19 +328,6 @@ const CategoriesPage = forwardRef<CategoriesPageHandle, CategoriesPageProps>(fun
         setSlugDirty(true)
       }
     }
-
-  const payload: CategoryPayload = useMemo(
-    () => ({
-      name: form.name || undefined,
-      slug: form.slug || undefined,
-      parent_id: currentParentId ?? undefined,
-      is_active: form.is_active,
-      featured_only: form.featured_only,
-      sort_order: Number.isNaN(form.sort_order) ? 0 : form.sort_order,
-      description: form.description || undefined,
-    }),
-    [form, currentParentId],
-  )
 
   const applyJsonToForm = (raw: string) => {
     try {
@@ -372,6 +365,7 @@ const CategoriesPage = forwardRef<CategoriesPageHandle, CategoriesPageProps>(fun
             ? parsed.featured_only
             : prev.featured_only,
       }))
+      setEditorKey((k) => k + 1)
     } catch (err) {
       setJsonSnippetError('Не удалось разобрать JSON. Проверь формат.')
     }
@@ -408,6 +402,24 @@ const CategoriesPage = forwardRef<CategoriesPageHandle, CategoriesPageProps>(fun
     setSaveError(null)
 
     try {
+      let descriptionFromEditor = form.description
+      if (descriptionEditorRef.current) {
+        const value = descriptionEditorRef.current.getValue()
+        if (value.content_html) {
+          descriptionFromEditor = value.content_html
+        }
+      }
+
+      const payload: CategoryPayload = {
+        name: form.name || undefined,
+        slug: form.slug || undefined,
+        parent_id: currentParentId ?? undefined,
+        is_active: form.is_active,
+        featured_only: form.featured_only,
+        sort_order: Number.isNaN(form.sort_order) ? 0 : form.sort_order,
+        description: descriptionFromEditor || undefined,
+      }
+
       if (dialogMode === 'create') {
         await api.post('/admin/categories', payload)
       } else if (dialogMode === 'edit' && currentNode) {
@@ -522,6 +534,7 @@ const CategoriesPage = forwardRef<CategoriesPageHandle, CategoriesPageProps>(fun
                 onChange={(e) => setJsonSnippet(e.target.value)}
                 multiline
                 minRows={3}
+                maxRows={3}
                 fullWidth
               />
               <Box>
@@ -555,14 +568,17 @@ const CategoriesPage = forwardRef<CategoriesPageHandle, CategoriesPageProps>(fun
               fullWidth
               required
             />
-            <TextField
-              label="Описание (HTML)"
-              value={form.description}
-              onChange={handleFormChange('description')}
-              fullWidth
-              multiline
-              minRows={4}
-            />
+            <Box>
+              <Typography variant="subtitle2" gutterBottom>
+                Описание категории (визуальный редактор)
+              </Typography>
+              <ProductEditor
+                key={editorKey}
+                ref={descriptionEditorRef}
+                mode="category"
+                initialContentHtml={form.description}
+              />
+            </Box>
             <TextField
               label="Порядок сортировки"
               type="number"
