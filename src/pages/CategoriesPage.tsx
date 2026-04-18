@@ -1,4 +1,10 @@
-import { forwardRef, useEffect, useImperativeHandle, useState, useRef } from 'react'
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useState,
+  useRef,
+} from "react";
 import {
   Alert,
   Box,
@@ -18,50 +24,62 @@ import {
   Switch,
   TextField,
   Typography,
-} from '@mui/material'
-import { Add, Edit, ExpandLess, ExpandMore, FilterList, Refresh } from '@mui/icons-material'
-import { slugify } from '../utils/slugify'
-import { ProductEditor, type ProductEditorHandle } from '../components/ProductEditor'
-import api from '../api/client'
+} from "@mui/material";
+import {
+  Add,
+  DeleteOutline,
+  Edit,
+  ExpandLess,
+  ExpandMore,
+  FilterList,
+  Refresh,
+} from "@mui/icons-material";
+import { slugify } from "../utils/slugify";
+import {
+  ProductEditor,
+  type ProductEditorHandle,
+} from "../components/ProductEditor";
+import api from "../api/client";
 
 interface CategoryNode {
-  id: number
-  name: string
-  slug: string
-  description: string | null
-  desc_product_count: number
-  sort_order: number
-  children: CategoryNode[]
+  id: number;
+  name: string;
+  slug: string;
+  description: string | null;
+  desc_product_count: number;
+  sort_order: number;
+  children: CategoryNode[];
 }
 
 interface CategoryFormState {
-  name: string
-  slug: string
-  description: string
-  sort_order: number
-  is_active: boolean
-  featured_only: boolean
+  name: string;
+  slug: string;
+  description: string;
+  sort_order: number;
+  is_active: boolean;
+  featured_only: boolean;
 }
 
 interface CategoryPayload {
-  name?: string
-  slug?: string
-  parent_id?: number | null
-  is_active?: boolean
-  featured_only?: boolean
-  sort_order?: number
-  description?: string | null
+  name?: string;
+  slug?: string;
+  parent_id?: number | null;
+  is_active?: boolean;
+  featured_only?: boolean;
+  sort_order?: number;
+  description?: string | null;
 }
 
 interface CategoryTreeProps {
-  nodes: CategoryNode[]
-  level?: number
-  parentId?: number | null
-  expanded: Set<number>
-  onToggle: (id: number) => void
-  onCreate: (parentId: number | null) => void
-  onEdit: (node: CategoryNode, parentId: number | null) => void
-  onSelect?: (node: CategoryNode) => void
+  nodes: CategoryNode[];
+  level?: number;
+  parentId?: number | null;
+  expanded: Set<number>;
+  onToggle: (id: number) => void;
+  onCreate: (parentId: number | null) => void;
+  onEdit: (node: CategoryNode, parentId: number | null) => void;
+  onDelete: (node: CategoryNode) => void;
+  onSelect?: (node: CategoryNode) => void;
 }
 
 function CategoryTree({
@@ -72,15 +90,16 @@ function CategoryTree({
   onToggle,
   onCreate,
   onEdit,
+  onDelete,
   onSelect,
 }: CategoryTreeProps) {
-  if (!nodes.length) return null
+  if (!nodes.length) return null;
 
   return (
     <List disablePadding>
       {nodes.map((node) => {
-        const hasChildren = node.children && node.children.length > 0
-        const isExpanded = expanded.has(node.id)
+        const hasChildren = node.children && node.children.length > 0;
+        const isExpanded = expanded.has(node.id);
 
         return (
           <Box key={node.id} sx={{ pl: level * 2 }}>
@@ -93,49 +112,72 @@ function CategoryTree({
                     edge="end"
                     size="small"
                     onClick={(event) => {
-                      event.stopPropagation()
-                      onSelect && onSelect(node)
+                      event.stopPropagation();
+                      onSelect && onSelect(node);
                     }}
                     aria-label="Показать товары категории"
                   >
                     <FilterList fontSize="small" />
                   </IconButton>
+
                   <IconButton
                     edge="end"
                     size="small"
                     onClick={(event) => {
-                      event.stopPropagation()
-                      onCreate(node.id)
+                      event.stopPropagation();
+                      onCreate(node.id);
                     }}
                     aria-label="Добавить подкатегорию"
                   >
                     <Add fontSize="small" />
                   </IconButton>
+
                   <IconButton
                     edge="end"
                     size="small"
                     onClick={(event) => {
-                      event.stopPropagation()
-                      onEdit(node, parentId)
+                      event.stopPropagation();
+                      onEdit(node, parentId);
                     }}
                     aria-label="Редактировать категорию"
                   >
                     <Edit fontSize="small" />
                   </IconButton>
+
+                  <IconButton
+                    edge="end"
+                    size="small"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onDelete(node);
+                    }}
+                    aria-label="Удалить категорию"
+                  >
+                    <DeleteOutline fontSize="small" />
+                  </IconButton>
                 </Stack>
               }
             >
-              <Stack direction="row" spacing={1} alignItems="center" sx={{ flex: 1 }}>
+              <Stack
+                direction="row"
+                spacing={1}
+                alignItems="center"
+                sx={{ flex: 1 }}
+              >
                 {hasChildren ? (
                   <IconButton
                     size="small"
                     onClick={(event) => {
-                      event.stopPropagation()
-                      onToggle(node.id)
+                      event.stopPropagation();
+                      onToggle(node.id);
                     }}
-                    aria-label={isExpanded ? 'Свернуть' : 'Развернуть'}
+                    aria-label={isExpanded ? "Свернуть" : "Развернуть"}
                   >
-                    {isExpanded ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
+                    {isExpanded ? (
+                      <ExpandLess fontSize="small" />
+                    ) : (
+                      <ExpandMore fontSize="small" />
+                    )}
                   </IconButton>
                 ) : (
                   <Box sx={{ width: 32 }} />
@@ -157,477 +199,652 @@ function CategoryTree({
                   onToggle={onToggle}
                   onCreate={onCreate}
                   onEdit={onEdit}
+                  onDelete={onDelete}
                   onSelect={onSelect}
                 />
               </Collapse>
             )}
           </Box>
-        )
+        );
       })}
     </List>
-  )
+  );
 }
 
 function buildInitialFormState(node?: CategoryNode): CategoryFormState {
   if (!node) {
     return {
-      name: '',
-      slug: '',
-      description: '',
+      name: "",
+      slug: "",
+      description: "",
       sort_order: 0,
       is_active: true,
       featured_only: false,
-    }
+    };
   }
 
   return {
     name: node.name,
     slug: node.slug,
-    description: node.description ?? '',
+    description: node.description ?? "",
     sort_order: node.sort_order ?? 0,
     is_active: true,
     featured_only: false,
-  }
+  };
 }
 
 export interface CategoriesPageHandle {
-  reload: () => void
+  reload: () => void;
 }
 
 interface CategoriesPageProps {
-  onCategorySelect?: (slug: string) => void
+  onCategorySelect?: (slug: string) => void;
 }
 
-const CategoriesPage = forwardRef<CategoriesPageHandle, CategoriesPageProps>(function CategoriesPage(
-  props,
-  ref,
-) {
-  const { onCategorySelect } = props
-  const [data, setData] = useState<CategoryNode[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+const CategoriesPage = forwardRef<CategoriesPageHandle, CategoriesPageProps>(
+  function CategoriesPage(props, ref) {
+    const { onCategorySelect } = props;
+    const [data, setData] = useState<CategoryNode[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
-  const [expanded, setExpanded] = useState<Set<number>>(() => new Set())
+    const [expanded, setExpanded] = useState<Set<number>>(() => new Set());
 
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create')
-  const [currentNode, setCurrentNode] = useState<CategoryNode | null>(null)
-  const [currentParentId, setCurrentParentId] = useState<number | null>(null)
-  const [form, setForm] = useState<CategoryFormState>(() => buildInitialFormState())
-  const [saving, setSaving] = useState(false)
-  const [saveError, setSaveError] = useState<string | null>(null)
-  const [jsonSnippet, setJsonSnippet] = useState('')
-  const [jsonSnippetError, setJsonSnippetError] = useState<string | null>(null)
-  const [slugDirty, setSlugDirty] = useState(false)
-  const [editorKey, setEditorKey] = useState(0)
-  const descriptionEditorRef = useRef<ProductEditorHandle | null>(null)
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [dialogMode, setDialogMode] = useState<"create" | "edit">("create");
+    const [currentNode, setCurrentNode] = useState<CategoryNode | null>(null);
+    const [currentParentId, setCurrentParentId] = useState<number | null>(null);
+    const [form, setForm] = useState<CategoryFormState>(() =>
+      buildInitialFormState(),
+    );
+    const [saving, setSaving] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
 
-  const loadTree = async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const { data } = await api.get<CategoryNode[]>('/categories/tree')
-      setData(data)
-    } catch (err: any) {
-      const message = err?.response?.data?.message || 'Не удалось загрузить дерево категорий.'
-      setError(message)
-    } finally {
-      setLoading(false)
-    }
-  }
+    const [deleteCategoryError, setDeleteCategoryError] = useState<
+      string | null
+    >(null);
 
-  useEffect(() => {
-    loadTree()
-  }, [])
+    const [deleteTarget, setDeleteTarget] = useState<CategoryNode | null>(null);
+    const [deleting, setDeleting] = useState(false);
+    const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  useImperativeHandle(
-    ref,
-    () => ({
-      reload: loadTree,
-    }),
-    [],
-  )
-
-  const handleToggle = (id: number) => {
-    setExpanded((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) {
-        next.delete(id)
-      } else {
-        next.add(id)
-      }
-      return next
-    })
-  }
-
-  // авто‑генерация slug из name, пока пользователь сам не менял slug
-  useEffect(() => {
-    if (!slugDirty) {
-      setForm((prev) => {
-        const auto = slugify(prev.name || '')
-        if (!auto || prev.slug === auto) return prev
-        return { ...prev, slug: auto }
-      })
-    }
-  }, [form.name, slugDirty])
-
-  const openCreateDialog = (parentId: number | null) => {
-    setDialogMode('create')
-    setCurrentNode(null)
-    setCurrentParentId(parentId)
-    setForm(buildInitialFormState())
-    setJsonSnippet('')
-    setJsonSnippetError(null)
-    setSlugDirty(false)
-    setEditorKey((k) => k + 1)
-    setSlugDirty(false)
-    setSaveError(null)
-    setDialogOpen(true)
-  }
-
-  const openEditDialog = (node: CategoryNode, parentId: number | null) => {
-    setDialogMode('edit')
-    setCurrentNode(node)
-    setCurrentParentId(parentId)
-    setForm(buildInitialFormState(node))
-    const snippet = JSON.stringify(
-      {
-        name: node.name,
-        slug: node.slug,
-        parent_id: parentId,
-        is_active: true,
-        featured_only: false,
-        sort_order: node.sort_order,
-        description: node.description ?? '',
-      },
+    const [jsonSnippet, setJsonSnippet] = useState("");
+    const [jsonSnippetError, setJsonSnippetError] = useState<string | null>(
       null,
-      2,
-    )
-    setJsonSnippet(snippet)
-    setJsonSnippetError(null)
-    setSlugDirty(true)
-    setEditorKey((k) => k + 1)
-    setSaveError(null)
-    setDialogOpen(true)
-  }
+    );
+    const [slugDirty, setSlugDirty] = useState(false);
+    const [editorKey, setEditorKey] = useState(0);
+    const descriptionEditorRef = useRef<ProductEditorHandle | null>(null);
 
-  const handleFormChange =
-    (field: keyof CategoryFormState) => (event: React.ChangeEvent<HTMLInputElement>) => {
-      const value =
-        field === 'is_active' || field === 'featured_only'
-          ? event.target.checked
-          : field === 'sort_order'
-            ? Number(event.target.value)
-            : event.target.value
-
-      setForm((prev) => ({
-        ...prev,
-        [field]: value,
-      }))
-      if (field === 'slug') {
-        setSlugDirty(true)
+    const loadTree = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const { data } = await api.get<CategoryNode[]>("/categories/tree");
+        setData(data);
+      } catch (err: any) {
+        const message =
+          err?.response?.data?.message ||
+          "Не удалось загрузить дерево категорий.";
+        setError(message);
+      } finally {
+        setLoading(false);
       }
-    }
+    };
 
-  const applyJsonToForm = (raw: string) => {
-    try {
-      const parsed = JSON.parse(raw) as Partial<{
-        name: string
-        slug: string
-        parent_id: number | null
-        is_active: boolean
-        featured_only: boolean
-        sort_order: number
-        description: string | null
-      }>
+    useEffect(() => {
+      loadTree();
+    }, []);
 
-      setJsonSnippet(raw)
-      setJsonSnippetError(null)
+    useImperativeHandle(
+      ref,
+      () => ({
+        reload: loadTree,
+      }),
+      [],
+    );
 
-      if (Object.prototype.hasOwnProperty.call(parsed, 'parent_id')) {
-        setCurrentParentId(parsed.parent_id ?? null)
-      }
-
-      setForm((prev) => ({
-        ...prev,
-        name: parsed.name ?? prev.name,
-        slug: parsed.slug ?? prev.slug,
-        description:
-          typeof parsed.description === 'string' ? parsed.description : prev.description,
-        sort_order:
-          typeof parsed.sort_order === 'number' && !Number.isNaN(parsed.sort_order)
-            ? parsed.sort_order
-            : prev.sort_order,
-        is_active:
-          typeof parsed.is_active === 'boolean' ? parsed.is_active : prev.is_active,
-        featured_only:
-          typeof parsed.featured_only === 'boolean'
-            ? parsed.featured_only
-            : prev.featured_only,
-      }))
-      setEditorKey((k) => k + 1)
-    } catch (err) {
-      setJsonSnippetError('Не удалось разобрать JSON. Проверь формат.')
-    }
-  }
-
-  const handlePasteJsonFromClipboard = async () => {
-    try {
-      const text = await navigator.clipboard.readText()
-      if (!text) {
-        setJsonSnippetError('В буфере обмена нет текста.')
-        return
-      }
-      applyJsonToForm(text)
-    } catch (err) {
-      setJsonSnippetError('Нет доступа к буферу обмена.')
-    }
-  }
-
-  const handleApplyJsonFromInput = () => {
-    if (!jsonSnippet.trim()) {
-      setJsonSnippetError('Поле с JSON пустое.')
-      return
-    }
-    applyJsonToForm(jsonSnippet)
-  }
-
-  const handleSave = async () => {
-    if (!form.name || !form.slug) {
-      setSaveError('Имя и slug обязательны.')
-      return
-    }
-
-    setSaving(true)
-    setSaveError(null)
-
-    try {
-      let descriptionFromEditor = form.description
-      if (descriptionEditorRef.current) {
-        const value = descriptionEditorRef.current.getValue()
-        if (value.content_html) {
-          descriptionFromEditor = value.content_html
+    const handleToggle = (id: number) => {
+      setExpanded((prev) => {
+        const next = new Set(prev);
+        if (next.has(id)) {
+          next.delete(id);
+        } else {
+          next.add(id);
         }
+        return next;
+      });
+    };
+
+    // авто‑генерация slug из name, пока пользователь сам не менял slug
+    useEffect(() => {
+      if (!slugDirty) {
+        setForm((prev) => {
+          const auto = slugify(prev.name || "");
+          if (!auto || prev.slug === auto) return prev;
+          return { ...prev, slug: auto };
+        });
+      }
+    }, [form.name, slugDirty]);
+
+    const openCreateDialog = (parentId: number | null) => {
+      setDialogMode("create");
+      setCurrentNode(null);
+      setCurrentParentId(parentId);
+      setForm(buildInitialFormState());
+      setJsonSnippet("");
+      setJsonSnippetError(null);
+      setSlugDirty(false);
+      setEditorKey((k) => k + 1);
+      setSlugDirty(false);
+      setSaveError(null);
+      setDialogOpen(true);
+    };
+
+    const openEditDialog = (node: CategoryNode, parentId: number | null) => {
+      setDialogMode("edit");
+      setCurrentNode(node);
+      setCurrentParentId(parentId);
+      setForm(buildInitialFormState(node));
+      const snippet = JSON.stringify(
+        {
+          name: node.name,
+          slug: node.slug,
+          parent_id: parentId,
+          is_active: true,
+          featured_only: false,
+          sort_order: node.sort_order,
+          description: node.description ?? "",
+        },
+        null,
+        2,
+      );
+      setJsonSnippet(snippet);
+      setJsonSnippetError(null);
+      setSlugDirty(true);
+      setEditorKey((k) => k + 1);
+      setSaveError(null);
+      setDialogOpen(true);
+    };
+
+    const handleDelete = async () => {
+      if (!deleteTarget) return;
+
+      setDeleting(true);
+      setDeleteError(null);
+
+      try {
+        await api.delete(`/admin/categories/${deleteTarget.id}`);
+
+        if (onCategorySelect) {
+          onCategorySelect("");
+        }
+
+        setDeleteTarget(null);
+        await loadTree();
+      } catch (err: any) {
+        const code = err?.response?.data?.error;
+
+        const message =
+          code === "HAS_CHILDREN"
+            ? "Нельзя удалить категорию: сначала удали или перенеси подкатегории."
+            : code === "HAS_PRODUCTS"
+              ? "Нельзя удалить категорию: в этой категории есть товары."
+              : code === "NOT_FOUND"
+                ? "Категория не найдена."
+                : err?.response?.data?.message ||
+                  "Не удалось удалить категорию.";
+
+        setDeleteError(message);
+      } finally {
+        setDeleting(false);
+      }
+    };
+
+    const deleteCategoryRequest = async (
+      node: CategoryNode,
+      forceDeleteProducts = false,
+    ) => {
+      await api.delete(`/admin/categories/${node.id}`, {
+        params: forceDeleteProducts ? { force: "true" } : undefined,
+      });
+    };
+
+    const handleDeleteCategory = async (node: CategoryNode) => {
+      const firstConfirm = window.confirm(`Удалить категорию "${node.name}"?`);
+      if (!firstConfirm) return;
+
+      setDeleteCategoryError(null);
+
+      try {
+        await deleteCategoryRequest(node, false);
+
+        if (onCategorySelect) {
+          onCategorySelect("");
+        }
+
+        await loadTree();
+      } catch (err: any) {
+        const code = err?.response?.data?.error;
+
+        if (code === "HAS_PRODUCTS") {
+          const forceConfirm = window.confirm(
+            "Вы уверены что хотите удалить категорию ? В ней есть товары, все они будут удалены!",
+          );
+
+          if (!forceConfirm) {
+            return;
+          }
+
+          try {
+            await deleteCategoryRequest(node, true);
+
+            if (onCategorySelect) {
+              onCategorySelect("");
+            }
+
+            await loadTree();
+            return;
+          } catch (forceErr: any) {
+            const forceMessage =
+              forceErr?.response?.data?.message ||
+              forceErr?.response?.data?.error ||
+              "Не удалось удалить категорию.";
+
+            setDeleteCategoryError(forceMessage);
+            return;
+          }
+        }
+
+        const message =
+          code === "HAS_CHILDREN"
+            ? "Нельзя удалить категорию: сначала удалите или перенесите подкатегории."
+            : err?.response?.data?.message ||
+              err?.response?.data?.error ||
+              "Не удалось удалить категорию.";
+
+        setDeleteCategoryError(message);
+      }
+    };
+
+    const handleFormChange =
+      (field: keyof CategoryFormState) =>
+      (event: React.ChangeEvent<HTMLInputElement>) => {
+        const value =
+          field === "is_active" || field === "featured_only"
+            ? event.target.checked
+            : field === "sort_order"
+              ? Number(event.target.value)
+              : event.target.value;
+
+        setForm((prev) => ({
+          ...prev,
+          [field]: value,
+        }));
+        if (field === "slug") {
+          setSlugDirty(true);
+        }
+      };
+
+    const applyJsonToForm = (raw: string) => {
+      try {
+        const parsed = JSON.parse(raw) as Partial<{
+          name: string;
+          slug: string;
+          parent_id: number | null;
+          is_active: boolean;
+          featured_only: boolean;
+          sort_order: number;
+          description: string | null;
+        }>;
+
+        setJsonSnippet(raw);
+        setJsonSnippetError(null);
+
+        if (Object.prototype.hasOwnProperty.call(parsed, "parent_id")) {
+          setCurrentParentId(parsed.parent_id ?? null);
+        }
+
+        setForm((prev) => ({
+          ...prev,
+          name: parsed.name ?? prev.name,
+          slug: parsed.slug ?? prev.slug,
+          description:
+            typeof parsed.description === "string"
+              ? parsed.description
+              : prev.description,
+          sort_order:
+            typeof parsed.sort_order === "number" &&
+            !Number.isNaN(parsed.sort_order)
+              ? parsed.sort_order
+              : prev.sort_order,
+          is_active:
+            typeof parsed.is_active === "boolean"
+              ? parsed.is_active
+              : prev.is_active,
+          featured_only:
+            typeof parsed.featured_only === "boolean"
+              ? parsed.featured_only
+              : prev.featured_only,
+        }));
+        setEditorKey((k) => k + 1);
+      } catch (err) {
+        setJsonSnippetError("Не удалось разобрать JSON. Проверь формат.");
+      }
+    };
+
+    const handlePasteJsonFromClipboard = async () => {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (!text) {
+          setJsonSnippetError("В буфере обмена нет текста.");
+          return;
+        }
+        applyJsonToForm(text);
+      } catch (err) {
+        setJsonSnippetError("Нет доступа к буферу обмена.");
+      }
+    };
+
+    const handleApplyJsonFromInput = () => {
+      if (!jsonSnippet.trim()) {
+        setJsonSnippetError("Поле с JSON пустое.");
+        return;
+      }
+      applyJsonToForm(jsonSnippet);
+    };
+
+    const handleSave = async () => {
+      if (!form.name || !form.slug) {
+        setSaveError("Имя и slug обязательны.");
+        return;
       }
 
-      const payload: CategoryPayload = {
-        name: form.name || undefined,
-        slug: form.slug || undefined,
-        parent_id: currentParentId ?? undefined,
-        is_active: form.is_active,
-        featured_only: form.featured_only,
-        sort_order: Number.isNaN(form.sort_order) ? 0 : form.sort_order,
-        description: descriptionFromEditor || undefined,
+      setSaving(true);
+      setSaveError(null);
+
+      try {
+        let descriptionFromEditor = form.description;
+        if (descriptionEditorRef.current) {
+          const value = descriptionEditorRef.current.getValue();
+          if (value.content_html) {
+            descriptionFromEditor = value.content_html;
+          }
+        }
+
+        const payload: CategoryPayload = {
+          name: form.name || undefined,
+          slug: form.slug || undefined,
+          parent_id: currentParentId ?? undefined,
+          is_active: form.is_active,
+          featured_only: form.featured_only,
+          sort_order: Number.isNaN(form.sort_order) ? 0 : form.sort_order,
+          description: descriptionFromEditor || undefined,
+        };
+
+        if (dialogMode === "create") {
+          await api.post("/admin/categories", payload);
+        } else if (dialogMode === "edit" && currentNode) {
+          await api.put(`/admin/categories/${currentNode.id}`, payload);
+        }
+
+        if (onCategorySelect && form.slug) {
+          onCategorySelect(form.slug);
+        }
+
+        setDialogOpen(false);
+        await loadTree();
+      } catch (err: any) {
+        const message =
+          err?.response?.data?.message ||
+          err?.response?.data?.error ||
+          "Не удалось сохранить категорию.";
+        setSaveError(message);
+      } finally {
+        setSaving(false);
       }
+    };
 
-      if (dialogMode === 'create') {
-        await api.post('/admin/categories', payload)
-      } else if (dialogMode === 'edit' && currentNode) {
-        await api.put(`/admin/categories/${currentNode.id}`, payload)
+    const dialogTitle =
+      dialogMode === "create"
+        ? currentParentId
+          ? "Новая подкатегория"
+          : "Новая корневая категория"
+        : "Редактирование категории";
+
+    const handleSelectCategory = (node: CategoryNode) => {
+      if (onCategorySelect) {
+        onCategorySelect(node.slug);
       }
+    };
 
-      if (onCategorySelect && form.slug) {
-        onCategorySelect(form.slug)
-      }
-
-      setDialogOpen(false)
-      await loadTree()
-    } catch (err: any) {
-      const message =
-        err?.response?.data?.message ||
-        err?.response?.data?.error ||
-        'Не удалось сохранить категорию.'
-      setSaveError(message)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const dialogTitle =
-    dialogMode === 'create'
-      ? currentParentId
-        ? 'Новая подкатегория'
-        : 'Новая корневая категория'
-      : 'Редактирование категории'
-
-  const handleSelectCategory = (node: CategoryNode) => {
-    if (onCategorySelect) {
-      onCategorySelect(node.slug)
-    }
-  }
-
-  return (
-    <Box>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-        <Box>
-          <Typography variant="h5" gutterBottom>
-            Категории
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Здесь можно просматривать дерево категорий и создавать/редактировать записи.
-          </Typography>
-        </Box>
-        <Stack direction="row" spacing={1}>
-          <Button
-            variant="outlined"
-            startIcon={<Refresh />}
-            onClick={loadTree}
-            disabled={loading}
-          >
-            Обновить
-          </Button>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => openCreateDialog(null)}
-          >
-            Добавить категорию
-          </Button>
+    return (
+      <Box>
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          sx={{ mb: 2 }}
+        >
+          <Box>
+            <Typography variant="h5" gutterBottom>
+              Категории
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Здесь можно просматривать дерево категорий и
+              создавать/редактировать записи.
+            </Typography>
+          </Box>
+          <Stack direction="row" spacing={1}>
+            <Button
+              variant="outlined"
+              startIcon={<Refresh />}
+              onClick={loadTree}
+              disabled={loading}
+            >
+              Обновить
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => openCreateDialog(null)}
+            >
+              Добавить категорию
+            </Button>
+          </Stack>
         </Stack>
-      </Stack>
 
-      {loading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
-          <CircularProgress />
-        </Box>
-      )}
+        {loading && (
+          <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+            <CircularProgress />
+          </Box>
+        )}
 
-      {error && (
-        <Alert severity="error" sx={{ mt: 2 }}>
-          {error}
-        </Alert>
-      )}
+        {error && (
+          <Alert severity="error" sx={{ mt: 2 }}>
+            {error}
+          </Alert>
+        )}
 
-      {!loading && !error && data.length === 0 && (
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-          Категорий пока нет.
-        </Typography>
-      )}
+        {deleteCategoryError && (
+          <Alert severity="error" sx={{ mt: 2 }}>
+            {deleteCategoryError}
+          </Alert>
+        )}
 
-      {!loading && !error && data.length > 0 && (
-        <CategoryTree
-          nodes={data}
-          expanded={expanded}
-          onToggle={handleToggle}
-          onCreate={openCreateDialog}
-          onEdit={openEditDialog}
-          onSelect={handleSelectCategory}
-        />
-      )}
+        {!loading && !error && data.length === 0 && (
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+            Категорий пока нет.
+          </Typography>
+        )}
 
-      <Dialog open={dialogOpen} onClose={() => !saving && setDialogOpen(false)} fullWidth maxWidth="sm">
-        <DialogTitle>{dialogTitle}</DialogTitle>
-        <DialogContent dividers>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <Stack spacing={1}>
-              <Stack direction="row" justifyContent="space-between" alignItems="center">
-                <Typography variant="body2" color="text.secondary">
-                  Вставь в меня JSON, чтобы заполнить поля категории.
-                </Typography>
-                <Button size="small" onClick={handlePasteJsonFromClipboard}>
-                  Вставить из буфера
-                </Button>
+        {!loading && !error && data.length > 0 && (
+          <CategoryTree
+            nodes={data}
+            expanded={expanded}
+            onToggle={handleToggle}
+            onCreate={openCreateDialog}
+            onEdit={openEditDialog}
+            onDelete={handleDeleteCategory}
+            onSelect={handleSelectCategory}
+          />
+        )}
+
+        <Dialog
+          open={dialogOpen}
+          onClose={() => !saving && setDialogOpen(false)}
+          fullWidth
+          maxWidth="sm"
+        >
+          <DialogTitle>{dialogTitle}</DialogTitle>
+          <DialogContent dividers>
+            <Stack spacing={2} sx={{ mt: 1 }}>
+              <Stack spacing={1}>
+                <Stack
+                  direction="row"
+                  justifyContent="space-between"
+                  alignItems="center"
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    Вставь в меня JSON, чтобы заполнить поля категории.
+                  </Typography>
+                  <Button size="small" onClick={handlePasteJsonFromClipboard}>
+                    Вставить из буфера
+                  </Button>
+                </Stack>
+                <TextField
+                  placeholder="Вставь в меня"
+                  value={jsonSnippet}
+                  onChange={(e) => setJsonSnippet(e.target.value)}
+                  multiline
+                  minRows={3}
+                  maxRows={3}
+                  fullWidth
+                />
+                <Box>
+                  <Button size="small" onClick={handleApplyJsonFromInput}>
+                    Применить JSON
+                  </Button>
+                </Box>
+                {jsonSnippetError && (
+                  <Alert severity="error">{jsonSnippetError}</Alert>
+                )}
               </Stack>
+
+              {currentParentId && (
+                <Typography variant="body2" color="text.secondary">
+                  Родительская категория ID: {currentParentId}
+                </Typography>
+              )}
               <TextField
-                placeholder="Вставь в меня"
-                value={jsonSnippet}
-                onChange={(e) => setJsonSnippet(e.target.value)}
-                multiline
-                minRows={3}
-                maxRows={3}
+                label="Название"
+                value={form.name}
+                onChange={handleFormChange("name")}
                 fullWidth
+                required
+              />
+              <TextField
+                label="Slug"
+                value={form.slug}
+                onChange={handleFormChange("slug")}
+                fullWidth
+                required
               />
               <Box>
-                <Button size="small" onClick={handleApplyJsonFromInput}>
-                  Применить JSON
-                </Button>
+                <Typography variant="subtitle2" gutterBottom>
+                  Описание категории (визуальный редактор)
+                </Typography>
+                <ProductEditor
+                  key={editorKey}
+                  ref={descriptionEditorRef}
+                  mode="category"
+                  initialContentHtml={form.description}
+                />
               </Box>
-              {jsonSnippetError && (
-                <Alert severity="error">
-                  {jsonSnippetError}
-                </Alert>
-              )}
-            </Stack>
+              <TextField
+                label="Порядок сортировки"
+                type="number"
+                value={form.sort_order}
+                onChange={handleFormChange("sort_order")}
+                fullWidth
+              />
+              <Stack direction="row" spacing={2}>
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={form.is_active}
+                      onChange={handleFormChange("is_active")}
+                      color="primary"
+                    />
+                  }
+                  label="Активна"
+                />
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={form.featured_only}
+                      onChange={handleFormChange("featured_only")}
+                      color="primary"
+                    />
+                  }
+                  label="Только избранные товары"
+                />
+              </Stack>
 
-            {currentParentId && (
+              {saveError && <Alert severity="error">{saveError}</Alert>}
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setDialogOpen(false)} disabled={saving}>
+              Отмена
+            </Button>
+            <Button onClick={handleSave} variant="contained" disabled={saving}>
+              {saving ? "Сохранение..." : "Сохранить"}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={Boolean(deleteTarget)}
+          onClose={() => !deleting && setDeleteTarget(null)}
+          fullWidth
+          maxWidth="xs"
+        >
+          <DialogTitle>Удалить категорию</DialogTitle>
+
+          <DialogContent dividers>
+            <Stack spacing={2}>
+              <Typography>
+                Удалить категорию <strong>{deleteTarget?.name}</strong>?
+              </Typography>
+
               <Typography variant="body2" color="text.secondary">
-                Родительская категория ID: {currentParentId}
+                Удаление сработает только если у категории нет подкатегорий и
+                товаров.
               </Typography>
-            )}
-            <TextField
-              label="Название"
-              value={form.name}
-              onChange={handleFormChange('name')}
-              fullWidth
-              required
-            />
-            <TextField
-              label="Slug"
-              value={form.slug}
-              onChange={handleFormChange('slug')}
-              fullWidth
-              required
-            />
-            <Box>
-              <Typography variant="subtitle2" gutterBottom>
-                Описание категории (визуальный редактор)
-              </Typography>
-              <ProductEditor
-                key={editorKey}
-                ref={descriptionEditorRef}
-                mode="category"
-                initialContentHtml={form.description}
-              />
-            </Box>
-            <TextField
-              label="Порядок сортировки"
-              type="number"
-              value={form.sort_order}
-              onChange={handleFormChange('sort_order')}
-              fullWidth
-            />
-            <Stack direction="row" spacing={2}>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={form.is_active}
-                    onChange={handleFormChange('is_active')}
-                    color="primary"
-                  />
-                }
-                label="Активна"
-              />
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={form.featured_only}
-                    onChange={handleFormChange('featured_only')}
-                    color="primary"
-                  />
-                }
-                label="Только избранные товары"
-              />
+
+              {deleteError && <Alert severity="error">{deleteError}</Alert>}
             </Stack>
+          </DialogContent>
 
-            {saveError && (
-              <Alert severity="error">
-                {saveError}
-              </Alert>
-            )}
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDialogOpen(false)} disabled={saving}>
-            Отмена
-          </Button>
-          <Button onClick={handleSave} variant="contained" disabled={saving}>
-            {saving ? 'Сохранение...' : 'Сохранить'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
-  )
-})
+          <DialogActions>
+            <Button onClick={() => setDeleteTarget(null)} disabled={deleting}>
+              Отмена
+            </Button>
 
-export default CategoriesPage
+            <Button
+              color="error"
+              variant="contained"
+              onClick={handleDelete}
+              disabled={deleting}
+            >
+              {deleting ? "Удаление..." : "Удалить"}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    );
+  },
+);
 
+export default CategoriesPage;
