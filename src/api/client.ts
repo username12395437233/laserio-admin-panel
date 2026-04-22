@@ -4,10 +4,6 @@ const api = axios.create({
   baseURL: "https://tamasaya.ru/api/laserio",
 });
 
-const searchApi = axios.create({
-  baseURL: "https://tamasaya.ru/api/laserio",
-});
-
 const attachAuth = (config: any) => {
   const token = localStorage.getItem("laserio_token");
   if (token) {
@@ -18,7 +14,6 @@ const attachAuth = (config: any) => {
 };
 
 api.interceptors.request.use(attachAuth);
-searchApi.interceptors.request.use(attachAuth);
 
 export interface LoginResponse {
   access_token: string;
@@ -27,5 +22,4 @@ export interface LoginResponse {
   // их можно будет сюда добавить
 }
 
-export { searchApi };
 export default api;
