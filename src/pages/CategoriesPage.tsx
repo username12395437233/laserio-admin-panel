@@ -427,14 +427,14 @@ const CategoriesPage = forwardRef<CategoriesPageHandle, CategoriesPageProps>(
       } catch (err: any) {
         const code = err?.response?.data?.error;
 
-        if (code === "HAS_PRODUCTS") {
+        if (code === "HAS_PRODUCTS" || code === "HAS_CHILDREN") {
           const forceConfirm = window.confirm(
-            "Вы уверены что хотите удалить категорию ? В ней есть товары, все они будут удалены!",
+            code === "HAS_CHILDREN"
+              ? "В категории есть подкатегории. Удалить всю ветку вместе с товарами?"
+              : "В категории есть товары. Удалить категорию вместе со всеми товарами?",
           );
 
-          if (!forceConfirm) {
-            return;
-          }
+          if (!forceConfirm) return;
 
           try {
             await deleteCategoryRequest(node, true);
@@ -457,11 +457,9 @@ const CategoriesPage = forwardRef<CategoriesPageHandle, CategoriesPageProps>(
         }
 
         const message =
-          code === "HAS_CHILDREN"
-            ? "Нельзя удалить категорию: сначала удалите или перенесите подкатегории."
-            : err?.response?.data?.message ||
-              err?.response?.data?.error ||
-              "Не удалось удалить категорию.";
+          err?.response?.data?.message ||
+          err?.response?.data?.error ||
+          "Не удалось удалить категорию.";
 
         setDeleteCategoryError(message);
       }
