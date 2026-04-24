@@ -14,6 +14,7 @@ import {
   Select,
   Stack,
   Table,
+  Pagination,
   TableBody,
   TableCell,
   TableHead,
@@ -44,13 +45,7 @@ interface CategoryOption {
   slug: string;
 }
 
-interface CategoryProductsResponse {
-  category: {
-    id: number;
-    name: string;
-    slug: string;
-    description: string | null;
-  };
+interface ProductsResponse {
   products: ProductListItem[];
   pagination: {
     page: number;
@@ -60,12 +55,19 @@ interface CategoryProductsResponse {
   };
 }
 
+interface ProductsPaginationState {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
 interface ProductListItem {
   id: number;
   name: string;
   slug: string;
   price: number;
-  primary_image_url: string | null;
+  image: string | null;
   doc_url: string | null;
 }
 
@@ -121,6 +123,14 @@ export default function ProductsPage(props: ProductsPageProps) {
   const [products, setProducts] = useState<ProductListItem[]>([]);
   const [productsLoading, setProductsLoading] = useState(false);
   const [productsError, setProductsError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(50);
+  const [pagination, setPagination] = useState<ProductsPaginationState>({
+    page: 1,
+    limit: 50,
+    total: 0,
+    pages: 0,
+  });
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<"create" | "edit">("create");
@@ -164,6 +174,7 @@ export default function ProductsPage(props: ProductsPageProps) {
   useEffect(() => {
     if (externalCategorySlug) {
       setSelectedCategorySlug(externalCategorySlug);
+      setPage(1);
     }
   }, [externalCategorySlug]);
 
@@ -194,18 +205,46 @@ export default function ProductsPage(props: ProductsPageProps) {
     }
   };
 
-  const loadProducts = async (slug: string) => {
+  const loadProducts = async (
+    slug: string,
+    nextPage: number = page,
+    nextLimit: number = limit,
+  ) => {
     if (!slug) {
       setProducts([]);
+      setPagination({
+        page: 1,
+        limit: nextLimit,
+        total: 0,
+        pages: 0,
+      });
       return;
     }
+
     setProductsLoading(true);
     setProductsError(null);
+
     try {
-      const { data } = await api.get<CategoryProductsResponse>(
-        `/categories/${slug}/products`,
-      );
+      const { data } = await api.get<ProductsResponse>("/products", {
+        params: {
+          category: slug,
+          page: nextPage,
+          limit: nextLimit,
+        },
+      });
+
+      if (data.pagination.total === 0 && nextPage !== 1) {
+        setPage(1);
+        return;
+      }
+
+      if (data.pagination.pages > 0 && nextPage > data.pagination.pages) {
+        setPage(data.pagination.pages);
+        return;
+      }
+
       setProducts(data.products);
+      setPagination(data.pagination);
     } catch (err: any) {
       const message =
         err?.response?.data?.message ||
@@ -223,14 +262,26 @@ export default function ProductsPage(props: ProductsPageProps) {
 
   useEffect(() => {
     if (selectedCategorySlug) {
-      loadProducts(selectedCategorySlug);
+      loadProducts(selectedCategorySlug, page, limit);
     } else {
       setProducts([]);
+      setPagination({
+        page: 1,
+        limit,
+        total: 0,
+        pages: 0,
+      });
     }
-  }, [selectedCategorySlug]);
+  }, [selectedCategorySlug, page, limit]);
 
   const handleChangeCategory = (event: any) => {
     setSelectedCategorySlug(event.target.value);
+    setPage(1);
+  };
+
+  const handleChangeLimit = (event: any) => {
+    setLimit(Number(event.target.value) || 50);
+    setPage(1);
   };
 
   const handleOpenCreate = () => {
@@ -268,7 +319,7 @@ export default function ProductsPage(props: ProductsPageProps) {
       }
 
       if (selectedCategorySlug) {
-        await loadProducts(selectedCategorySlug);
+        await loadProducts(selectedCategorySlug, page, limit);
       }
 
       if (onProductsChanged) {
@@ -423,7 +474,7 @@ export default function ProductsPage(props: ProductsPageProps) {
       );
 
       if (selectedCategorySlug) {
-        await loadProducts(selectedCategorySlug);
+        await loadProducts(selectedCategorySlug, page, limit);
       }
 
       if (onProductsChanged) {
@@ -478,7 +529,7 @@ export default function ProductsPage(props: ProductsPageProps) {
       );
 
       if (selectedCategorySlug) {
-        await loadProducts(selectedCategorySlug);
+        await loadProducts(selectedCategorySlug, page, limit);
       }
 
       if (onProductsChanged) {
@@ -505,7 +556,7 @@ export default function ProductsPage(props: ProductsPageProps) {
 
   const handleImagesChanged = async () => {
     if (selectedCategorySlug) {
-      await loadProducts(selectedCategorySlug);
+      await loadProducts(selectedCategorySlug, page, limit);
     }
 
     if (onProductsChanged) {
@@ -556,7 +607,7 @@ export default function ProductsPage(props: ProductsPageProps) {
       setDialogOpen(false);
 
       if (selectedCategorySlug) {
-        await loadProducts(selectedCategorySlug);
+        await loadProducts(selectedCategorySlug, page, limit);
       }
 
       if (onProductsChanged) {
@@ -599,7 +650,8 @@ export default function ProductsPage(props: ProductsPageProps) {
             variant="outlined"
             startIcon={<Refresh />}
             onClick={() =>
-              selectedCategorySlug && loadProducts(selectedCategorySlug)
+              selectedCategorySlug &&
+              loadProducts(selectedCategorySlug, page, limit)
             }
             disabled={!selectedCategorySlug || productsLoading}
           >
@@ -616,7 +668,12 @@ export default function ProductsPage(props: ProductsPageProps) {
         </Stack>
       </Stack>
 
-      <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        spacing={2}
+        sx={{ mb: 2 }}
+        alignItems={{ xs: "stretch", sm: "center" }}
+      >
         <FormControl sx={{ minWidth: 260 }} size="small">
           <InputLabel id="products-category-label">Категория</InputLabel>
           <Select
@@ -635,6 +692,32 @@ export default function ProductsPage(props: ProductsPageProps) {
             ))}
           </Select>
         </FormControl>
+
+        <FormControl
+          sx={{ width: 180 }}
+          size="small"
+          disabled={!selectedCategorySlug}
+        >
+          <InputLabel id="products-limit-label">Товаров на странице</InputLabel>
+          <Select
+            labelId="products-limit-label"
+            label="Товаров на странице"
+            value={String(limit)}
+            onChange={handleChangeLimit}
+          >
+            {[50, 100, 150].map((value) => (
+              <MenuItem key={value} value={value}>
+                {value} / стр.
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+
+        {selectedCategorySlug && (
+          <Typography variant="body2" color="text.secondary">
+            Всего товаров: {pagination.total}
+          </Typography>
+        )}
       </Stack>
 
       {categoriesLoading && (
@@ -680,76 +763,101 @@ export default function ProductsPage(props: ProductsPageProps) {
               В выбранной категории пока нет товаров.
             </Typography>
           ) : (
-            <Table size="small" sx={{ mt: 2 }}>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Фото</TableCell>
-                  <TableCell>Название</TableCell>
-                  <TableCell>Slug</TableCell>
-                  <TableCell align="right">Цена</TableCell>
-                  <TableCell align="right">Действия</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {products.map((product) => (
-                  <TableRow key={product.id} hover>
-                    <TableCell>
-                      {product.primary_image_url ? (
-                        <Box
-                          component="img"
-                          src={resolveAssetUrl(product.primary_image_url)}
-                          alt={product.name}
-                          sx={{
-                            width: 56,
-                            height: 56,
-                            objectFit: "cover",
-                            borderRadius: 1,
-                            border: "1px solid",
-                            borderColor: "divider",
-                            display: "block",
-                          }}
-                        />
-                      ) : (
-                        <Typography variant="caption" color="text.secondary">
-                          —
-                        </Typography>
-                      )}
-                    </TableCell>
-                    <TableCell>{product.name}</TableCell>
-                    <TableCell>{product.slug}</TableCell>
-                    <TableCell align="right">{product.price}</TableCell>
-                    <TableCell align="right">
-                      <Stack
-                        direction="row"
-                        spacing={1}
-                        justifyContent="flex-end"
-                      >
-                        <Button
-                          size="small"
-                          startIcon={<Edit />}
-                          onClick={() => handleOpenEdit(product)}
-                          disabled={deletingProductId === product.id}
-                        >
-                          Редактировать
-                        </Button>
-
-                        <Button
-                          size="small"
-                          color="error"
-                          startIcon={<DeleteOutline />}
-                          onClick={() => handleDeleteProduct(product)}
-                          disabled={deletingProductId === product.id}
-                        >
-                          {deletingProductId === product.id
-                            ? "Удаление..."
-                            : "Удалить"}
-                        </Button>
-                      </Stack>
-                    </TableCell>
+            <>
+              <Table size="small" sx={{ mt: 2 }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Фото</TableCell>
+                    <TableCell>Название</TableCell>
+                    <TableCell>Slug</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHead>
+                <TableBody>
+                  {products.map((product) => (
+                    <TableRow key={product.id} hover>
+                      <TableCell>
+                        {product.image ? (
+                          <Box
+                            component="img"
+                            src={resolveAssetUrl(product.image)}
+                            alt={product.name}
+                            sx={{
+                              width: 56,
+                              height: 56,
+                              objectFit: "cover",
+                              borderRadius: 1,
+                              border: "1px solid",
+                              borderColor: "divider",
+                              display: "block",
+                            }}
+                          />
+                        ) : (
+                          <Typography variant="caption" color="text.secondary">
+                            —
+                          </Typography>
+                        )}
+                      </TableCell>
+                      <TableCell>{product.name}</TableCell>
+                      <TableCell>{product.slug}</TableCell>
+                      <TableCell align="right">{product.price}</TableCell>
+                      <TableCell align="right">
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          justifyContent="flex-end"
+                        >
+                          <Button
+                            size="small"
+                            startIcon={<Edit />}
+                            onClick={() => handleOpenEdit(product)}
+                            disabled={deletingProductId === product.id}
+                          >
+                            Редактировать
+                          </Button>
+
+                          <Button
+                            size="small"
+                            color="error"
+                            startIcon={<DeleteOutline />}
+                            onClick={() => handleDeleteProduct(product)}
+                            disabled={deletingProductId === product.id}
+                          >
+                            {deletingProductId === product.id
+                              ? "Удаление..."
+                              : "Удалить"}
+                          </Button>
+                        </Stack>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              {pagination.pages > 1 && (
+                <Stack
+                  direction={{ xs: "column", md: "row" }}
+                  spacing={2}
+                  justifyContent="space-between"
+                  alignItems={{ xs: "flex-start", md: "center" }}
+                  sx={{ mt: 2 }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    Страница {pagination.page} из {pagination.pages}. Показано{" "}
+                    {products.length} из {pagination.total} товаров.
+                  </Typography>
+
+                  <Pagination
+                    color="primary"
+                    shape="rounded"
+                    showFirstButton
+                    showLastButton
+                    count={pagination.pages}
+                    page={pagination.page}
+                    onChange={(_, value) => setPage(value)}
+                  />
+                </Stack>
+              )}
+            </>
           )}
         </>
       )}
