@@ -156,7 +156,6 @@ export default function ProductsPage(props: ProductsPageProps) {
 
   const [deletingDoc, setDeletingDoc] = useState(false);
   const [docActionError, setDocActionError] = useState<string | null>(null);
-
   const [uploadingDoc, setUploadingDoc] = useState(false);
   const docInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -497,20 +496,25 @@ export default function ProductsPage(props: ProductsPageProps) {
   const handleUploadDoc = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
-    const file = event.target.files?.[0] ?? null;
+    const files = Array.from(event.target.files ?? []);
     event.target.value = "";
 
-    if (!currentProduct || !file) return;
+    if (!currentProduct || files.length === 0) return;
+
+    if (files.length > 20) {
+      setDocActionError("За один раз можно загрузить не более 20 PDF-файлов.");
+      return;
+    }
 
     setUploadingDoc(true);
     setDocActionError(null);
 
     try {
       const formData = new FormData();
-      formData.append("file", file);
+      files.forEach((file) => formData.append("files", file));
 
       const { data } = await api.post(
-        `/admin/products/${currentProduct.id}/doc`,
+        `/admin/products/${currentProduct.id}/docs`,
         formData,
         {
           headers: {
@@ -950,6 +954,7 @@ export default function ProductsPage(props: ProductsPageProps) {
                 ref={docInputRef}
                 type="file"
                 accept="application/pdf,.pdf"
+                multiple
                 hidden
                 onChange={handleUploadDoc}
               />
@@ -971,13 +976,7 @@ export default function ProductsPage(props: ProductsPageProps) {
                       onClick={() => docInputRef.current?.click()}
                       disabled={uploadingDoc || deletingDoc}
                     >
-                      {currentProduct?.doc_url
-                        ? uploadingDoc
-                          ? "Загрузка..."
-                          : "Заменить файл"
-                        : uploadingDoc
-                          ? "Загрузка..."
-                          : "Загрузить файл"}
+                      {uploadingDoc ? "Загрузка..." : "Добавить файлы"}
                     </Button>
 
                     {currentProduct?.doc_url ? (
