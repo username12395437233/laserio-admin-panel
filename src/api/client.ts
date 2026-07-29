@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://77.105.169.22/api/laserio",
+  baseURL: "/api/laserio",
 });
 
 const attachAuth = (config: any) => {
