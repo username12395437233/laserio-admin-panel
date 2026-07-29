@@ -6,6 +6,7 @@ import SearchTab from './SearchTab'
 
 export default function CatalogPage() {
   const [selectedCategorySlug, setSelectedCategorySlug] = useState<string>('')
+  const [categoriesVersion, setCategoriesVersion] = useState(0)
   const categoriesRef = useRef<CategoriesPageHandle | null>(null)
   const [activeTab, setActiveTab] = useState<'main' | 'search'>('main')
 
@@ -28,7 +29,11 @@ export default function CatalogPage() {
           sx={{ mt: 1 }}
         >
           <Box sx={{ flex: 1.1, minWidth: { xs: '100%', md: 340 } }}>
-            <CategoriesPage ref={categoriesRef} onCategorySelect={setSelectedCategorySlug} />
+            <CategoriesPage
+              ref={categoriesRef}
+              onCategorySelect={setSelectedCategorySlug}
+              onCategoriesChanged={() => setCategoriesVersion((version) => version + 1)}
+            />
           </Box>
           <Box
             sx={{
@@ -41,6 +46,7 @@ export default function CatalogPage() {
           >
             <ProductsPage
               externalCategorySlug={selectedCategorySlug}
+              categoriesVersion={categoriesVersion}
               onProductsChanged={() => categoriesRef.current?.reload()}
             />
           </Box>
@@ -55,5 +61,4 @@ export default function CatalogPage() {
     </Box>
   )
 }
-
 

@@ -239,11 +239,12 @@ export interface CategoriesPageHandle {
 
 interface CategoriesPageProps {
   onCategorySelect?: (slug: string) => void;
+  onCategoriesChanged?: () => void;
 }
 
 const CategoriesPage = forwardRef<CategoriesPageHandle, CategoriesPageProps>(
   function CategoriesPage(props, ref) {
-    const { onCategorySelect } = props;
+    const { onCategorySelect, onCategoriesChanged } = props;
     const [data, setData] = useState<CategoryNode[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -382,6 +383,7 @@ const CategoriesPage = forwardRef<CategoriesPageHandle, CategoriesPageProps>(
 
         setDeleteTarget(null);
         await loadTree();
+        onCategoriesChanged?.();
       } catch (err: any) {
         const code = err?.response?.data?.error;
 
@@ -424,6 +426,7 @@ const CategoriesPage = forwardRef<CategoriesPageHandle, CategoriesPageProps>(
         }
 
         await loadTree();
+        onCategoriesChanged?.();
       } catch (err: any) {
         const code = err?.response?.data?.error;
 
@@ -444,6 +447,7 @@ const CategoriesPage = forwardRef<CategoriesPageHandle, CategoriesPageProps>(
             }
 
             await loadTree();
+            onCategoriesChanged?.();
             return;
           } catch (forceErr: any) {
             const forceMessage =
@@ -592,6 +596,7 @@ const CategoriesPage = forwardRef<CategoriesPageHandle, CategoriesPageProps>(
 
         setDialogOpen(false);
         await loadTree();
+        onCategoriesChanged?.();
       } catch (err: any) {
         const message =
           err?.response?.data?.message ||
@@ -738,13 +743,6 @@ const CategoriesPage = forwardRef<CategoriesPageHandle, CategoriesPageProps>(
                 label="Название"
                 value={form.name}
                 onChange={handleFormChange("name")}
-                fullWidth
-                required
-              />
-              <TextField
-                label="Slug"
-                value={form.slug}
-                onChange={handleFormChange("slug")}
                 fullWidth
                 required
               />

@@ -37,6 +37,7 @@ import {
 } from "../components/ProductEditor";
 
 import { ProductImagesManager } from "../components/ProductImagesManager";
+import { ProductDocumentsManager } from "../components/ProductDocumentsManager";
 import { resolveAssetUrl } from "../utils/resolveAssetUrl";
 
 interface CategoryOption {
@@ -96,24 +97,12 @@ interface ProductPayload {
 
 interface ProductsPageProps {
   externalCategorySlug?: string;
+  categoriesVersion?: number;
   onProductsChanged?: () => void;
 }
 
-function resolveDocUrl(url?: string | null) {
-  if (!url) return "";
-
-  if (/^https?:\/\//i.test(url)) {
-    return url;
-  }
-
-  const base = String(api.defaults.baseURL || window.location.origin);
-  const origin = new URL(base, window.location.origin).origin;
-
-  return new URL(url, origin).toString();
-}
-
 export default function ProductsPage(props: ProductsPageProps) {
-  const { externalCategorySlug, onProductsChanged } = props;
+  const { externalCategorySlug, categoriesVersion = 0, onProductsChanged } = props;
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [categoriesError, setCategoriesError] = useState<string | null>(null);
@@ -257,7 +246,7 @@ export default function ProductsPage(props: ProductsPageProps) {
 
   useEffect(() => {
     loadCategories();
-  }, []);
+  }, [categoriesVersion]);
 
   useEffect(() => {
     if (selectedCategorySlug) {
@@ -773,7 +762,6 @@ export default function ProductsPage(props: ProductsPageProps) {
                   <TableRow>
                     <TableCell>Фото</TableCell>
                     <TableCell>Название</TableCell>
-                    <TableCell>Slug</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -802,7 +790,6 @@ export default function ProductsPage(props: ProductsPageProps) {
                         )}
                       </TableCell>
                       <TableCell>{product.name}</TableCell>
-                      <TableCell>{product.slug}</TableCell>
                       <TableCell align="right">{product.price}</TableCell>
                       <TableCell align="right">
                         <Stack
@@ -881,10 +868,6 @@ export default function ProductsPage(props: ProductsPageProps) {
                 justifyContent="space-between"
                 alignItems="center"
               >
-                <Typography variant="body2" color="text.secondary">
-                  Вставь в меня JSON, чтобы заполнить описание и характеристики
-                  товара.
-                </Typography>
                 <Button size="small" onClick={handlePasteJsonFromClipboard}>
                   Вставить из буфера
                 </Button>
@@ -937,19 +920,13 @@ export default function ProductsPage(props: ProductsPageProps) {
               fullWidth
               required
             />
-            <TextField
-              label="Slug"
-              value={form.slug}
-              onChange={handleFormChange("slug")}
-              fullWidth
-              required
-            />
 
             <Box>
               <Typography variant="subtitle2" gutterBottom>
                 Файл товара
               </Typography>
 
+              <Box sx={{ display: "none" }}>
               <input
                 ref={docInputRef}
                 type="file"
@@ -983,7 +960,7 @@ export default function ProductsPage(props: ProductsPageProps) {
                       <>
                         <Button
                           component="a"
-                          href={resolveDocUrl(currentProduct.doc_url)}
+                          href={resolveAssetUrl(currentProduct.doc_url)}
                           target="_blank"
                           rel="noreferrer"
                           variant="outlined"
@@ -1016,6 +993,12 @@ export default function ProductsPage(props: ProductsPageProps) {
                   )}
                 </Stack>
               )}
+              </Box>
+
+              <ProductDocumentsManager
+                productId={dialogMode === "edit" ? currentProduct?.id : null}
+                onDocumentsChanged={handleImagesChanged}
+              />
             </Box>
 
             <Box>

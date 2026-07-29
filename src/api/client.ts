@@ -15,6 +15,17 @@ const attachAuth = (config: any) => {
 
 api.interceptors.request.use(attachAuth);
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401 && !error.config?.url?.includes("/admin/auth/login")) {
+      localStorage.removeItem("laserio_token");
+      window.location.assign("/login");
+    }
+    return Promise.reject(error);
+  },
+);
+
 export interface LoginResponse {
   access_token: string;
   expires_in?: number;
